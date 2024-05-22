@@ -4,6 +4,7 @@ import (
 	"flag"
 	"fmt"
 	"log"
+	"math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -25,6 +26,12 @@ func main() {
 
 	if len(domains) == 0 || len(keywords) == 0 {
 		log.Fatal("You must provide at least one domain and one keyword")
+	}
+
+	customHeaders := map[string]string{
+		"User-Agent":      "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/91.0.4472.124 Safari/537.36",
+		"Accept-Language": "en-US,en;q=0.9",
+		"Referer":         "http://google.com",
 	}
 
 	for _, startURL := range domains {
@@ -75,7 +82,19 @@ func main() {
 		})
 
 		c.OnRequest(func(r *colly.Request) {
+			for key, value := range customHeaders {
+				r.Headers.Set(key, value)
+			}
+
+			delay := time.Duration(rand.Intn(3000-1000)+1000) * time.Millisecond
+			time.Sleep(delay)
+			fmt.Println("Added a small " + fmt.Sprint(delay) + "ms delay")
 			fmt.Println("Visiting: ", r.URL)
+		})
+
+		c.OnResponse(func(r *colly.Response) {
+			fmt.Println(r.Request.URL)
+			fmt.Println(r.StatusCode)
 		})
 
 		c.OnScraped(func(r *colly.Response) {
