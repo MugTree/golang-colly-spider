@@ -4,7 +4,6 @@ import (
 	"flag"
 	"fmt"
 	"log"
-	"math/rand"
 	"net/url"
 	"os"
 	"path/filepath"
@@ -48,6 +47,11 @@ func main() {
 
 		c := colly.NewCollector()
 
+		c.Limit(&colly.LimitRule{
+			DomainGlob:  "*",
+			RandomDelay: 1 * time.Second,
+		})
+
 		c.OnHTML("a[href]", func(e *colly.HTMLElement) {
 
 			link := e.Attr("href")
@@ -86,9 +90,6 @@ func main() {
 				r.Headers.Set(key, value)
 			}
 
-			delay := time.Duration(rand.Intn(3000-1000)+1000) * time.Millisecond
-			time.Sleep(delay)
-			fmt.Println("Added a small " + fmt.Sprint(delay) + "ms delay")
 			fmt.Println("Visiting: ", r.URL)
 		})
 
@@ -97,13 +98,7 @@ func main() {
 			fmt.Println(r.StatusCode)
 		})
 
-		c.OnScraped(func(r *colly.Response) {
-			fmt.Println("Finished scraping", startHostname)
-		})
-
 		c.Visit(startURL)
-
-		c.Wait()
 
 		dirName := "public"
 
